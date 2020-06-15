@@ -19,7 +19,8 @@ class Score extends StatelessWidget {
         style: TextStyle(
             fontSize: 25,
             fontFamily: 'Indies',
-            fontWeight: FontWeight.bold),
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[300]),
       ),
     );
   }
@@ -44,7 +45,8 @@ class Level extends StatelessWidget {
         style: TextStyle(
             fontSize: 25,
             fontFamily: 'Indies',
-            fontWeight: FontWeight.bold),
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[300]),
       ),
     );
   }

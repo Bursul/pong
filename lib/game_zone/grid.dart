@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:pong/game_zone/game_info.dart';
 import 'ball.dart';
 import 'bat.dart';
-import 'dart:math';
 
 enum Direction { up, down, left, right }
 
@@ -18,8 +17,8 @@ class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
   double batWidthMultiplicator = 3;
   double ballSpeed = 5;
 
-  Direction vDir = Direction.down;
-  Direction hDir = Direction.right;
+  Direction verticalDirection = Direction.down;
+  Direction horizontalDirection = Direction.right;
 
   Animation<double> animation;
   AnimationController controller;
@@ -33,9 +32,6 @@ class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
   double batHeight = 0;
   double batPosition = 0;
 
-  double randX = 1;
-  double randY = 1;
-
   @override
   void initState() {
     controller = AnimationController(
@@ -43,18 +39,8 @@ class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
     animation = Tween<double>(begin: 0, end: 100).animate(controller);
     animation.addListener(() {
       safeSetState(() {
-        (hDir == Direction.right) ? posX += ballSpeed : posX -= ballSpeed;
-        (vDir == Direction.down) ? posY += ballSpeed : posY -= ballSpeed;
+        moveBall();
       });
-
-      // (hDir == Direction.right)
-      //       ? posX += ((ballSpeed * randX).round())
-      //       : posX -= ((ballSpeed * randX).round());
-      //   (vDir == Direction.down)
-      //       ? posY += ((ballSpeed * randY).round())
-      //       : posY -= ((ballSpeed * randY).round());
-      // });
-
       checkBorders();
     });
 
@@ -62,34 +48,42 @@ class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
     super.initState();
   }
 
+  void moveBall() {
+    (horizontalDirection == Direction.right) ? posX += ballSpeed : posX -= ballSpeed;
+    (verticalDirection == Direction.down) ? posY += ballSpeed : posY -= ballSpeed;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        height = constraints.maxHeight;
-        width = constraints.maxWidth;
-        batWidth = width / batWidthMultiplicator;
-        batHeight = height / 20;
-        return Stack(
-          children: <Widget>[
-            Score(score: score,),
-            Level(level: level),
-            Positioned(
-              child: Ball(),
-              top: posY,
-              left: posX,
-            ),
-            Positioned(
-              bottom: 1,
-              left: batPosition,
-              child: GestureDetector(
-                  onHorizontalDragUpdate: (DragUpdateDetails update) =>
-                      moveBat(update),
-                  child: Bat(batWidth, batHeight)),
-            )
-          ],
-        );
-      },
+    return Container(
+      color: Colors.grey[800],
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          height = constraints.maxHeight;
+          width = constraints.maxWidth;
+          batWidth = width / batWidthMultiplicator;
+          batHeight = height / 20;
+          return Stack(
+            children: <Widget>[
+              Score(score: score),
+              Level(level: level),
+              Positioned(
+                child: Ball(diameter),
+                top: posY,
+                left: posX,
+              ),
+              Positioned(
+                bottom: 1,
+                left: batPosition,
+                child: GestureDetector(
+                    onHorizontalDragUpdate: (DragUpdateDetails update) =>
+                        moveBat(update),
+                    child: Bat(batWidth, batHeight)),
+              )
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -100,20 +94,16 @@ class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
   }
 
   void checkBorders() {
-    if (posX <= 0 && hDir == Direction.left) {
-      hDir = Direction.right;
-      randX = randomNumber();
+    if (posX <= 0 && horizontalDirection == Direction.left) {
+      horizontalDirection = Direction.right;
     }
-    if (posX >= width - diameter && hDir == Direction.right) {
-      hDir = Direction.left;
-      randX = randomNumber();
+    if (posX >= width - diameter && horizontalDirection == Direction.right) {
+      horizontalDirection = Direction.left;
     }
     if (posY >= height - diameter - batHeight * 0.75 &&
-        vDir == Direction.down) {
-      if (posX >= (batPosition - diameter) &&
-          posX <= (batPosition + batWidth)) {
-        vDir = Direction.up;
-        randY = randomNumber();
+        verticalDirection == Direction.down) {
+      if (ballTouchesBat()) {
+        verticalDirection = Direction.up;
         safeSetState(() {
           score++;
           makeGameHarder();
@@ -125,10 +115,14 @@ class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
         }
       }
     }
-    if (posY <= 0 && vDir == Direction.up) {
-      vDir = Direction.down;
-      randY = randomNumber();
+    if (posY <= 0 && verticalDirection == Direction.up) {
+      verticalDirection = Direction.down;
     }
+  }
+
+  bool ballTouchesBat() {
+    return posX >= (batPosition - diameter) &&
+        posX <= (batPosition + batWidth);
   }
 
   void makeGameHarder() {
@@ -153,12 +147,6 @@ class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
         function();
       });
     }
-  }
-
-  double randomNumber() {
-    var ran = new Random();
-    int myNum = ran.nextInt(101);
-    return (50 + myNum) / 100;
   }
 
   void showStartAgainMessage(BuildContext context) {
@@ -198,7 +186,6 @@ class _PongState extends State<Pong> with SingleTickerProviderStateMixin {
     level = 0;
     batWidthMultiplicator = 3;
     ballSpeed = 5;
+    batPosition = width / 2 - batWidth / 2;
   }
 }
-
-
